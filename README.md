@@ -10,7 +10,7 @@ The blackbox of winter contribution, in this bone chilling cold, I am too lazy t
 
 ## Description
 
-### This was designed to be a beginner friendly version, so do not be afraid to give this repo a shot, I know for a fact many will step back seeing it being related to cybersec, but please don't, I assure you that you will genuinely learn a thing or two. And yes, I know many will use LLMs for this, but hey that's fine, just make sure to understand what the LLM says, cause you are not getting any points if you fail to give satisfactory explanation for any issue (pointing out a vulnerability) that you might raise.
+This was designed to be a beginner friendly version, so do not be afraid to give this repo a shot, I know for a fact many will step back seeing it being related to cybersec, but please don't, I assure you that you will genuinely learn a thing or two. And yes, I know many will use LLMs for this, but hey that's fine, just make sure to understand what the LLM says, cause you are not getting any points if you fail to give satisfactory explanation for any issue (pointing out a vulnerability) that you might raise.
 - Find out the problems
 - Communicate why you think the problem is a 'problem'
 - Propose a patch
