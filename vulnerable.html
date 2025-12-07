@@ -1,0 +1,169 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Test Site</title>
+<style>
+  body{font-family:Arial,Helvetica,sans-serif;max-width:900px;margin:30px auto;padding:20px}
+  .card{padding:16px;border:1px solid #ddd;border-radius:8px;margin-bottom:20px}
+  input[type=text],input[type=password]{width:100%;padding:8px;margin-top:4px;margin-bottom:8px;border:1px solid #ccc;border-radius:4px}
+  button{padding:8px 12px;border-radius:4px;border:1px solid #ccc;background:#f2f2f2;cursor:pointer}
+  img.profile{max-width:150px;margin-top:10px;border-radius:6px}
+  pre{background:#111;color:#fff;padding:12px;border-radius:4px;overflow:auto}
+</style>
+</head>
+<body>
+<!--There's so much wrong going on around here-->
+
+<h1>Test Web App</h1>
+
+<!-- gift = bmV2ZXIgZ29ubmEgZ2l2ZSB1IHVwIA== -->
+
+<div class="card">
+  <h2>Register</h2>
+  <label>Username</label>
+  <input id="regUser" type="text">
+  <label>Password</label>
+  <input id="regPass" type="password">
+  <button id="registerBtn">Register</button>
+  <button id="showDbBtn">Show DB</button>
+  <div id="dbDump"></div>
+</div>
+
+<div class="card">
+  <h2>Login</h2>
+  <label>Username</label>
+  <input id="loginUser" type="text">
+  <label>Password</label>
+  <input id="loginPass" type="password">
+  <button id="loginBtn">Login</button>
+  <button id="whoamiBtn">Who Am I</button>
+  <div id="tokenArea"></div>
+</div>
+
+<div class="card">
+  <h2>Upload Profile Picture</h2>
+  <input id="avatarInput" type="file" accept="image/*">
+  <div id="avatarPreview"></div>
+</div>
+
+<div class="card">
+  <h2>Admin Panel</h2>
+  <div id="adminPanel" style="display:none">
+    <p>Admin Access</p>
+    <button id="resetDbBtn">Reset DB</button>
+  </div>
+</div>
+
+<div class="card">
+  <h2>Debug</h2>
+  <pre id="internalDebug"></pre>
+</div>
+
+<script>
+const DUMMY_API_KEY = "pk_test_928340928340_EXPOSED_KEY";
+const DB_KEY = "testlab_users";
+const JWT_SECRET = "hardcoded_secret_123";
+
+function b64Encode(str){return btoa(unescape(encodeURIComponent(str))).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'')}
+function b64Decode(str){str=str.replace(/-/g,'+').replace(/_/g,'/');try{return decodeURIComponent(escape(atob(str)))}catch(e){return null}}
+
+function createJWT(payload){
+  const header=b64Encode(JSON.stringify({alg:"HS256",typ:"JWT"}));
+  const body=b64Encode(JSON.stringify(payload));
+  const data=header+"."+body+"."+JWT_SECRET;
+  const sig=b64Encode(String([...data].reduce((a,c)=>(a*31+c.charCodeAt(0))|0,7)));
+  return header+"."+body+"."+sig;
+}
+function decodeJWT(tok){
+  const p=tok.split(".");
+  if(p.length!==3)return null;
+  const pl=b64Decode(p[1]);
+  try{return JSON.parse(pl)}catch(e){return null}
+}
+
+function loadDB(){
+  const raw=localStorage.getItem(DB_KEY);
+  return raw?JSON.parse(raw):[];
+}
+function saveDB(arr){
+  localStorage.setItem(DB_KEY,JSON.stringify(arr));
+}
+
+document.getElementById("apiKey").textContent=DUMMY_API_KEY;
+
+document.getElementById("registerBtn").addEventListener("click",()=>{
+  const u=document.getElementById("regUser").value.trim();
+  const p=document.getElementById("regPass").value;
+  if(!u||!p)return;
+  const db=loadDB();
+  if(db.find(x=>x.username===u))return;
+  db.push({username:u,password:p,created:Date.now()});
+  saveDB(db);
+});
+
+document.getElementById("showDbBtn").addEventListener("click",()=>{
+  document.getElementById("dbDump").innerHTML="<pre>"+JSON.stringify(loadDB(),null,2)+"</pre>";
+});
+
+document.getElementById("loginBtn").addEventListener("click",()=>{
+  const u=document.getElementById("loginUser").value.trim();
+  const p=document.getElementById("loginPass").value;
+  const db=loadDB();
+  const user=db.find(x=>x.username===u && x.password===p);
+  if(!user)return;
+  const token=createJWT({username:u,isAdmin:!!user.isAdmin,iat:Date.now()});
+  localStorage.setItem("testlab_jwt",token);
+  document.getElementById("tokenArea").innerHTML="<pre>"+"logged in as user with no elevated priviliges"+"</pre>";
+});
+
+document.getElementById("whoamiBtn").addEventListener("click",()=>{
+  const token=localStorage.getItem("testlab_jwt");
+  if(!token)return;
+  const payload=decodeJWT(token);
+  document.getElementById("tokenArea").innerHTML="<pre>"+JSON.stringify(payload,null,2)+"</pre>";
+});
+
+document.getElementById("avatarInput").addEventListener("change",(e)=>{
+  const f=e.target.files[0];
+  if(!f)return;
+  const r=new FileReader();
+  r.onload=()=>{
+    localStorage.setItem("testlab_avatar",JSON.stringify({name:f.name,data:r.result}));
+    document.getElementById("avatarPreview").innerHTML=`<div>${f.name}</div><img class="profile" src="${r.result}">`;
+  }
+  r.readAsDataURL(f);
+});
+
+function params(){
+  const q={};
+  new URLSearchParams(location.search).forEach((v,k)=>q[k]=v);
+  return q;
+}
+const p=params();
+if(p.is_admin==="1"){
+  document.getElementById("adminPanel").style.display="block";
+}
+
+document.getElementById("resetDbBtn").addEventListener("click",()=>{
+  localStorage.removeItem(DB_KEY);
+});
+
+function debug(){
+  document.getElementById("internalDebug").textContent=
+    `secret: ${JWT_SECRET}\n`+
+    `apiKey: ${DUMMY_API_KEY}\n`+
+    `keys: ${Object.keys(localStorage).join(", ")}`;
+}
+setInterval(debug,1500);
+
+if(!loadDB().length){
+  saveDB([
+    {username:"alice",password:"password123",created:Date.now(),isAdmin:false},
+    {username:"bob",password:"hunter2",created:Date.now(),isAdmin:true}
+  ]);
+}
+</script>
+</body>
+</html>
