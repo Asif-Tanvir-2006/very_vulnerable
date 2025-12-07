@@ -2,8 +2,9 @@
 The blackbox of winter contribution, in this bone chilling cold, I am too lazy to function, and I don't know what the issues are, you tell me. First come, first serve, the one who raises the issue first and proposes a way to resovle it, gets points. Winter of Open Source, CodeIIEST X GDG
 # Here we go again :)
 
-<a href="https://winter-of-open-source.vercel.app/"><img src="https://raw.githubusercontent.com/ConsoleCzar-2/qr-on-site/main/assets/banner.png
-"></a>
+<a href="https://winter-of-open-source.vercel.app/"></a>
+
+<img src="https://raw.githubusercontent.com/ConsoleCzar-2/qr-on-site/main/assets/banner.png">
 
 [![Winter of Open Source](https://img.shields.io/badge/Winter%20of%20Open%20Source-2025-purple)](https://winter-of-open-source.vercel.app/)
 
