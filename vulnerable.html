@@ -62,20 +62,12 @@
 </div>
 
 <script>
-const DUMMY_API_KEY = "pk_test_928340928340_EXPOSED_KEY";
 const DB_KEY = "testlab_users";
-const JWT_SECRET = "hardcoded_secret_123";
 
 function b64Encode(str){return btoa(unescape(encodeURIComponent(str))).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'')}
 function b64Decode(str){str=str.replace(/-/g,'+').replace(/_/g,'/');try{return decodeURIComponent(escape(atob(str)))}catch(e){return null}}
 
-function createJWT(payload){
-  const header=b64Encode(JSON.stringify({alg:"HS256",typ:"JWT"}));
-  const body=b64Encode(JSON.stringify(payload));
-  const data=header+"."+body+"."+JWT_SECRET;
-  const sig=b64Encode(String([...data].reduce((a,c)=>(a*31+c.charCodeAt(0))|0,7)));
-  return header+"."+body+"."+sig;
-}
+
 function decodeJWT(tok){
   const p=tok.split(".");
   if(p.length!==3)return null;
@@ -91,7 +83,6 @@ function saveDB(arr){
   localStorage.setItem(DB_KEY,JSON.stringify(arr));
 }
 
-document.getElementById("apiKey").textContent=DUMMY_API_KEY;
 
 document.getElementById("registerBtn").addEventListener("click",()=>{
   const u=document.getElementById("regUser").value.trim();
@@ -107,23 +98,22 @@ document.getElementById("showDbBtn").addEventListener("click",()=>{
   document.getElementById("dbDump").innerHTML="<pre>"+JSON.stringify(loadDB(),null,2)+"</pre>";
 });
 
-document.getElementById("loginBtn").addEventListener("click",()=>{
-  const u=document.getElementById("loginUser").value.trim();
-  const p=document.getElementById("loginPass").value;
-  const db=loadDB();
-  const user=db.find(x=>x.username===u && x.password===p);
-  if(!user)return;
-  const token=createJWT({username:u,isAdmin:!!user.isAdmin,iat:Date.now()});
-  localStorage.setItem("testlab_jwt",token);
-  document.getElementById("tokenArea").innerHTML="<pre>"+"logged in as user with no elevated priviliges"+"</pre>";
+document.getElementById("loginBtn").addEventListener("click",()=> {
+  const u = document.getElementById("loginUser").value.trim();
+  const p = document.getElementById("loginPass").value;
+  const db = loadDB();
+  const user = db.find(x => x.username === u && x.password === p);
+  if (!user) return;
+
+  document.getElementById("tokenArea").innerHTML =
+    "<pre>Login successful. Authentication and token issuance should be handled by a backend service.</pre>";
 });
 
-document.getElementById("whoamiBtn").addEventListener("click",()=>{
-  const token=localStorage.getItem("testlab_jwt");
-  if(!token)return;
-  const payload=decodeJWT(token);
-  document.getElementById("tokenArea").innerHTML="<pre>"+JSON.stringify(payload,null,2)+"</pre>";
+document.getElementById("whoamiBtn").addEventListener("click",()=> {
+  document.getElementById("tokenArea").innerHTML =
+    "<pre>WhoAmI requires a backend-issued token. Frontend-only demo.</pre>";
 });
+
 
 document.getElementById("avatarInput").addEventListener("change",(e)=>{
   const f=e.target.files[0];
@@ -151,10 +141,15 @@ document.getElementById("resetDbBtn").addEventListener("click",()=>{
 });
 
 function debug(){
-  document.getElementById("internalDebug").textContent=
-    `secret: ${JWT_SECRET}\n`+
-    `apiKey: ${DUMMY_API_KEY}\n`+
-    `keys: ${Object.keys(localStorage).join(", ")}`;
+  const info = {
+    frontend: true,
+    backendConnected: false,
+    localStorageKeys: Object.keys(localStorage),
+    note: "Sensitive data is intentionally not exposed in frontend debug"
+  };
+
+  document.getElementById("internalDebug").textContent =
+    JSON.stringify(info, null, 2);
 }
 setInterval(debug,1500);
 
