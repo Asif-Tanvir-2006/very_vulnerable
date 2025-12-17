@@ -1,57 +1,44 @@
 /**
- * Minimal backend demonstrating correct secret handling.
- * Secrets are NEVER exposed to the frontend.
+ * Minimal backend demonstrating correct authorization flow.
  */
 
 import express from "express";
-import jwt from "jsonwebtoken";
+import { issueToken, verifyAdmin } from "./auth.js";
+import { getUserById } from "./db.js";
 
 const app = express();
 const PORT = 3000;
 
-// Secrets come from environment variables
-const API_KEY = process.env.API_KEY;
-const JWT_SECRET = process.env.JWT_SECRET;
-
 app.use(express.json());
 
-// Sanity check route
+// Health check
 app.get("/", (req, res) => {
-  res.json({
-    status: "Backend running",
-    secretsLoaded: Boolean(API_KEY && JWT_SECRET)
-  });
+  res.json({ status: "Backend running" });
 });
 
-// Example: backend-only API usage
-app.get("/secure-api", (req, res) => {
-  if (!API_KEY) {
-    return res.status(500).json({ error: "API_KEY not set" });
-  }
-
-  // API_KEY would be used here to call an external service
-  res.json({
-    message: "API call made securely from backend",
-    apiKeyExposed: false
-  });
-});
-
-// Example: JWT issued by backend
-app.post("/token", (req, res) => {
-  if (!JWT_SECRET) {
-    return res.status(500).json({ error: "JWT_SECRET not set" });
-  }
-
-  const payload = {
-    username: "demo_user",
-    role: "user"
-  };
-
-  const token = jwt.sign(payload, JWT_SECRET, {
-    expiresIn: "1h"
-  });
+/**
+ * Simulated login route.
+ * Credentials are assumed to be valid for demonstration.
+ */
+app.post("/login", (req, res) => {
+  const user = getUserById(2); // bob (admin) for demo
+  const token = issueToken(user);
 
   res.json({ token });
+});
+
+/**
+ * Admin-only route.
+ * Access is verified by backend logic.
+ */
+app.post("/admin/reset", (req, res) => {
+  const { token } = req.body;
+
+  if (!verifyAdmin(token)) {
+    return res.status(403).json({ error: "Admin access required" });
+  }
+
+  res.json({ message: "Admin action performed securely" });
 });
 
 app.listen(PORT, () => {

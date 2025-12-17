@@ -126,18 +126,11 @@ document.getElementById("avatarInput").addEventListener("change",(e)=>{
   r.readAsDataURL(f);
 });
 
-function params(){
-  const q={};
-  new URLSearchParams(location.search).forEach((v,k)=>q[k]=v);
-  return q;
-}
-const p=params();
-if(p.is_admin==="1"){
-  document.getElementById("adminPanel").style.display="block";
-}
+// Admin access must be verified by the backend.
+// Frontend-only checks are intentionally avoided.
 
 document.getElementById("resetDbBtn").addEventListener("click",()=>{
-  localStorage.removeItem(DB_KEY);
+  alert("Admin actions must be authorized by the backend.");
 });
 
 function debug(){
@@ -153,6 +146,8 @@ function debug(){
 }
 setInterval(debug,1500);
 
+// Demo users for frontend-only simulation.
+// Admin roles are enforced by the backend, not used here.
 if(!loadDB().length){
   saveDB([
     {username:"alice",password:"password123",created:Date.now(),isAdmin:false},
